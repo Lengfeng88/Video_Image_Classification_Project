@@ -42,11 +42,29 @@ def enhance_lighting(face_img):
     enhanced = cv2.merge((l, a, b))
     return cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
 
+def is_frontal_face(face_box, frame_shape):
+    x1, y1, x2, y2 = face_box
+    h, w = frame_shape[:2]
+    
+    # 1. Size check
+    face_area = (x2 - x1) * (y2 - y1)
+    if face_area < 0.02 * h * w:  # too small
+        return False
+        
+    # 2. Aspect ratio (profile faces are narrow)
+    aspect = (x2 - x1) / (y2 - y1)
+    if aspect < 0.6 or aspect > 1.4:  # too wide or narrow
+        return False
+        
+    # 3. Centered? (optional)
+    center_x = (x1 + x2) / 2
+    if abs(center_x - w/2) > w * 0.35:
+        return False
+        
+    return True
+
 prev_time = 0
 frame_cnts = 0
-
-most_confident_gender = 0
-most_confident_age = 0
 while True:
     ret, frame = cap.read()
 
@@ -67,7 +85,7 @@ while True:
     for i in range(detections.shape[2]):
         confidence = detections[0, 0, i, 2]
 
-        if confidence > 0.7:
+        if confidence > 0.9:
             x1 = int(detections[0, 0, i, 3] * f_w)
             y1 = int(detections[0, 0, i, 4] * f_h)
             x2 = int(detections[0, 0, i, 5] * f_w)
@@ -82,21 +100,27 @@ while True:
 
         if img.size == 0: continue
 
-        img = enhance_lighting(img)
-        #Extract the portion of the image with the face.
+        if is_frontal_face(faceBox, fr_cv.shape):
 
-        blob = cv2.dnn.blobFromImage(img, 1.0, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
 
-        gen.setInput(blob)
-        genderPreds = gen.forward()
-        gender = lg[genderPreds[0].argmax()]
+            img = enhance_lighting(img)
+            #Extract the portion of the image with the face.
 
-        age.setInput(blob)
-        agePreds = age.forward()
-        final_age = la[agePreds[0].argmax()]
+            blob = cv2.dnn.blobFromImage(img, 1.0, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
 
-        prev_frame_gender = gender
-        prev_frame_age = final_age
+            gen.setInput(blob)
+            genderPreds = gen.forward()
+            gender = lg[genderPreds[0].argmax()]
+
+            age.setInput(blob)
+            agePreds = age.forward()
+            final_age = la[agePreds[0].argmax()]
+
+            prev_frame_gender = gender
+            prev_frame_age = final_age
+
+            cv2.putText(fr_cv, f'{gender}, {final_age}', (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
     # Calculate FPS
     curr_time = time.time()
@@ -106,9 +130,9 @@ while True:
     # Display FPS on frame
     cv2.putText(fr_cv, f"FPS: {fps:.1f}", (10, 30), 
     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    if faceBoxes:
-        cv2.putText(fr_cv, f'{gender}, {final_age}', (x1, y1 - 10),
-        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+    # if faceBoxes:
+    #     cv2.putText(fr_cv, f'{gender}, {final_age}', (x1, y1 - 10),
+    #     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
     frame_cnts += 1
     cv2.imshow("Age/Gender Prediction", fr_cv)

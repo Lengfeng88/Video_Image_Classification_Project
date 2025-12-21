@@ -1,6 +1,5 @@
 import cv2
 import matplotlib.pyplot as plt
-import time
 
 image = cv2.imread('image.jpg')
 image = cv2.resize(image, (720, 640))
@@ -86,14 +85,7 @@ for faceBox in faceBoxes:
     agePreds = age.forward()
     final_age = la[agePreds[0].argmax()]
 
-    # Calculate FPS
-    curr_time = time.time()
-    fps = 1 / (curr_time - prev_time)
-    prev_time = curr_time
-
-    # Display FPS on frame
-    cv2.putText(fr_cv, f"FPS: {fps:.1f}", (10, 30), 
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    
 
     cv2.putText(fr_cv,
                 f'{gender}, {final_age}',
