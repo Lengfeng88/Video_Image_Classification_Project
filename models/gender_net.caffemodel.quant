@@ -1,0 +1,31 @@
+digraph G {
+	"cluster_4" [label="{conv1\nConvolution\nkernel_size : 7\lstride : 4\l | relu1\nReLU\noutput: 1 x 96 x 56 x 56\lOCV/CPU\n }" fillcolor="#ffffb3" style=filled shape=record]
+	"pool1" [label="pool1\nPooling\nkernel_size : 3\lstride : 2\lpool: MAX\loutput: 1 x 96 x 28 x 28\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"norm1" [label="norm1\nLRN\noutput: 1 x 96 x 28 x 28\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"cluster_3" [label="{conv2\nConvolution\nkernel_size : 5\lpad : 2\l | relu2\nReLU\noutput: 1 x 256 x 28 x 28\lOCV/CPU\n }" fillcolor="#ffffb3" style=filled shape=record]
+	"pool2" [label="pool2\nPooling\nkernel_size : 3\lstride : 2\lpool: MAX\loutput: 1 x 256 x 14 x 14\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"norm2" [label="norm2\nLRN\noutput: 1 x 256 x 14 x 14\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"cluster_2" [label="{conv3\nConvolution\nkernel_size : 3\lpad : 1\l | relu3\nReLU\noutput: 1 x 384 x 14 x 14\lOCV/CPU\n }" fillcolor="#ffffb3" style=filled shape=record]
+	"pool5" [label="pool5\nPooling\nkernel_size : 3\lstride : 2\lpool: MAX\loutput: 1 x 384 x 7 x 7\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"cluster_1" [label="{fc6\nInnerProduct\n | relu6\nReLU\noutput: 1 x 512\lOCV/CPU\n }" fillcolor="#ffffb3" style=filled shape=record]
+	"drop6" [label="drop6\nDropout\noutput: 1 x 512\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"cluster_0" [label="{fc7\nInnerProduct\n | relu7\nReLU\noutput: 1 x 512\lOCV/CPU\n }" fillcolor="#ffffb3" style=filled shape=record]
+	"drop7" [label="drop7\nDropout\noutput: 1 x 512\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"fc8" [label="fc8\nInnerProduct\noutput: 1 x 2\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+	"prob" [label="prob\nSoftmax\noutput: 1 x 2\lOCV/CPU\n" fillcolor="#ffffb3" style=filled shape=box]
+
+	"_input" -> "cluster_4"
+	"cluster_4" -> "pool1"
+	"pool1" -> "norm1"
+	"norm1" -> "cluster_3"
+	"cluster_3" -> "pool2"
+	"pool2" -> "norm2"
+	"norm2" -> "cluster_2"
+	"cluster_2" -> "pool5"
+	"pool5" -> "cluster_1"
+	"cluster_1" -> "drop6"
+	"drop6" -> "cluster_0"
+	"cluster_0" -> "drop7"
+	"drop7" -> "fc8"
+	"fc8" -> "prob"
+}

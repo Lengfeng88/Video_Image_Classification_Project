@@ -1,18 +1,21 @@
 import cv2
+import torchvision
 import matplotlib.pyplot as plt
 import time
 import heapq
 
-cap = cv2.VideoCapture("Video.mp4")
+cap = cv2.VideoCapture(0)
 
-face1 = "opencv_face_detector.pbtxt"
-face2 = "opencv_face_detector_uint8.pb"
-age1 = "age_deploy.prototxt"
-age2 = "age_net.caffemodel"
-gen1 = "gender_deploy.prototxt"
-gen2 = "gender_net.caffemodel"
+face1 = "models/opencv_face_detector.pbtxt"
+face2 = "models/opencv_face_detector_uint8.pb"
+age1 = "models/age_deploy.prototxt"
+age2 = "models/age_net.caffemodel"
+gen1 = "models/gender_deploy.prototxt"
+gen2 = "models/gender_net.caffemodel"
 
 MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+
+cv2.setLogLevel(0)  # Shows OpenCV DNN debug info
 
 # Using models
 # Face
@@ -79,7 +82,6 @@ while True:
         break
 
     fr_cv = frame.copy()
-
     f_h = fr_cv.shape[0]
     f_w = fr_cv.shape[1]
 
@@ -102,6 +104,9 @@ while True:
             faceBox = [x1, y1, x2, y2]
             max_Confidence = confidence
     
+    if not faceBox:
+        continue
+
     x1, y1, x2, y2 = faceBox
     cv2.rectangle(fr_cv, (x1, y1), (x2, y2), (0, 255, 0), int(round(f_h/150)), 8)
 

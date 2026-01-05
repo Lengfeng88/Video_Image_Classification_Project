@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 image = cv2.imread('image.jpg')
 image = cv2.resize(image, (720, 640))
 
-face1 = "opencv_face_detector.pbtxt"
-face2 = "opencv_face_detector_uint8.pb"
-age1 = "age_deploy.prototxt"
-age2 = "age_net.caffemodel"
-gen1 = "gender_deploy.prototxt"
-gen2 = "gender_net.caffemodel"
+face1 = "models/opencv_face_detector.pbtxt"
+face2 = "models/opencv_face_detector_uint8.pb"
+age1 = "models/age_deploy.prototxt"
+age2 = "models/age_net.caffemodel"
+gen1 = "models/gender_deploy.prototxt"
+gen2 = "models/gender_net.caffemodel"
 
 MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
 
