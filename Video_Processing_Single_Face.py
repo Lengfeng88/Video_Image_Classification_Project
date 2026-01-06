@@ -1,5 +1,4 @@
 import cv2
-import torchvision
 import matplotlib.pyplot as plt
 import time
 import heapq
