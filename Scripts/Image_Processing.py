@@ -1,8 +1,8 @@
 import cv2
 import matplotlib.pyplot as plt
 
-image = cv2.imread('image.jpg')
-image = cv2.resize(image, (720, 640))
+image = cv2.imread('Videos/IMG_0122.jpg')
+image = cv2.resize(image, (720, 340))
 
 face1 = "models/opencv_face_detector.pbtxt"
 face2 = "models/opencv_face_detector_uint8.pb"
@@ -24,8 +24,8 @@ age = cv2.dnn.readNet(age2, age1)
 gen = cv2.dnn.readNet(gen2, gen1)
 
 # Categories of distribution
-la = ['(0-2)', '(4-6)', '(8-12)', '(15-20)',
-      '(25-32)', '(38-43)', '(48-53)', '(60-100)']
+la = ['(0-3)', '(4-7)', '(8-14)', '(15-24)',
+      '(25-37)', '(38-43)', '(48-53)', '(60-100)']
 lg = ['Male', 'Female']
 
 # Copy image
