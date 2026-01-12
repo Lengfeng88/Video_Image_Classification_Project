@@ -11,4 +11,4 @@ for idx, image_name in enumerate(folder):
     cv2.imread(image_path)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     img = cv2.resize(img, (224, 224))
-    
+        

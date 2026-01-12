@@ -103,14 +103,16 @@ quantize_static(
 )
 print("Quantized model saved as age_net_quant.onnx")
 
+calibration_reader.idx = 0
+
 quantize_static(
-    model_input= "Quantization/gender_net_new_v11.onnx",
+    model_input= "Quantization/gender_net_v11.onnx",
     model_output="Quantization/gender_net_quant.onnx",
     calibration_data_reader=calibration_reader,
     quant_format=QuantFormat.QDQ,
     activation_type=QuantType.QUInt8,
     weight_type=QuantType.QUInt8,
-    calibrate_method=CalibrationMethod.MinMax
+    calibrate_method=CalibrationMethod  .MinMax
 )
 print("Quantized model saved as gender_net_quant.onnx")
 

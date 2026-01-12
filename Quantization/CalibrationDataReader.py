@@ -52,9 +52,13 @@ class FaceCalibrationDataReader(CalibrationDataReader):
     
     #Gonna have to change this soon
     def get_next(self):
+        if self.idx >= len(self.folder):
+            return None
         batch = os.path.join(self.folder_path, self.folder[self.idx])
         self.idx += 1
-        return {self.input_name: np.stack(batch)}
+        batch = self._load_and_preprocess(batch)
+        # return np.stack(batch)
+        return {self.input_name: batch[np.newaxis, ...]}
     
 
 
