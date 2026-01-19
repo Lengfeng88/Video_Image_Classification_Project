@@ -10,6 +10,8 @@ from Calib_Dataset import AgeCalibrationDataset
 from torch.utils.data import random_split
 import cv2
 import nncf
+import os
+import random
 
 gender_path = "Quantization/gender_net_v11.onnx"
 age_path = "Quantization/age_net_new_v11.onnx"
@@ -20,7 +22,6 @@ calib_data_path = "UTKFace/"
 
 # gender = Core.read_model(gender_path)
 # age = Core.read_model(age_path)
-
 gender = ov.convert_model(gender_path)
 age = ov.convert_model(age_path)
 
@@ -52,6 +53,14 @@ age = ov.convert_model(age_path)
 
 # pred = np.argmax(output_tensor, axis=1)
 # print("Predicted gender class:", pred[0])
+
+img_dir = os.listdir(calib_data_path)
+
+random.shuffle(img_dir)
+
+img_dir = img_dir[:6767]
+
+
 
 overall_gender_data = GenderCalibrationDataset(img_dir=calib_data_path)
 overall_age_data = AgeCalibrationDataset(img_dir=calib_data_path)
