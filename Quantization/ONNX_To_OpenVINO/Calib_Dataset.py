@@ -128,23 +128,6 @@ class AgeCalibrationDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.img_list)
 
-    # def __getitem__(self, idx):
-    #     if idx >= len(self.img_list):
-    #         return np.zeros((227, 227, 3), dtype=np.float32), 0
-        
-    #     img_path = self.img_list[idx]
-    #     img = cv2.imread(img_path)
-
-    #     if img is None:
-    #         return self.__getitem__(idx + 1)
-        
-    #     img = self.preprocess(img)
-    #     label = self.get_age_label(img_path)
-
-    #     if label is None:
-    #         return self.__getitem__(idx + 1) 
-    #     return img, label
-
     def __getitem__(self, idx):
         while idx < len(self.img_list):
             img_path = self.img_list[idx]

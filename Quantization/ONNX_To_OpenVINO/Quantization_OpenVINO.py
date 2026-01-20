@@ -12,9 +12,11 @@ import cv2
 import nncf
 import os
 import random
+from PIL import Image
 
 gender_path = "Quantization/gender_net_v11.onnx"
 age_path = "Quantization/age_net_new_v11.onnx"
+output_folder = "Quantization/calib_data_preprocessed_improved_data/"
 # calib_data_path = "Quantization/calib_data_preprocessed/"
 calib_data_path = "UTKFace/"
 
@@ -54,21 +56,27 @@ age = ov.convert_model(age_path)
 # pred = np.argmax(output_tensor, axis=1)
 # print("Predicted gender class:", pred[0])
 
-img_dir = os.listdir(calib_data_path)
+img_names = os.listdir(calib_data_path)
 
-random.shuffle(img_dir)
+random.shuffle(img_names)
 
-img_dir = img_dir[:6767]
-
-
+img_names = img_names[:7676]
+for img_name in (img_names):
+    img_path = str(calib_data_path + img_name)
+    img = Image.open(img_path)
+    img.save(str(output_folder + img_name))
 
 overall_gender_data = GenderCalibrationDataset(img_dir=calib_data_path)
-overall_age_data = AgeCalibrationDataset(img_dir=calib_data_path)
-calib_size = int(0.8 * len(overall_gender_data))
-val_size = len(overall_gender_data) - calib_size
+overall_age_data = AgeCalibrationDataset(img_dir=output_folder)
 
-gender_calib_dataset, gender_val_dataset = random_split(overall_gender_data, [calib_size, val_size])
-age_calib_dataset, age_val_dataset = random_split(overall_age_data, [calib_size, val_size])
+calib_size_gender = int(0.8 * len(overall_gender_data))
+val_size_gender = len(overall_gender_data) - calib_size_gender
+
+calib_size_age = int(0.8 * len(overall_age_data))
+val_size_age = len(overall_age_data) - calib_size_age
+
+gender_calib_dataset, gender_val_dataset = random_split(overall_gender_data, [calib_size_gender, val_size_gender])
+age_calib_dataset, age_val_dataset = random_split(overall_age_data, [calib_size_age, val_size_age])
 
 gender_calibration_loader = DataLoader(gender_calib_dataset, batch_size=1, shuffle=False)
 gender_validation_loader = DataLoader(gender_val_dataset, batch_size=1, shuffle=False)
@@ -116,17 +124,17 @@ quantized_age = nncf.quantize_with_accuracy_control(
     drop_type=nncf.DropType.ABSOLUTE,
 )
 
-# quantized_gender = nncf.quantize_with_accuracy_control(
-#     gender,
-#     calibration_dataset=gender_calibration_dataset,
-#     validation_dataset=gender_validation_dataset,
-#     validation_fn=validate,
-#     max_drop=0.01,
-#     drop_type=nncf.DropType.ABSOLUTE,
-# )
+quantized_gender = nncf.quantize_with_accuracy_control(
+    gender,
+    calibration_dataset=gender_calibration_dataset,
+    validation_dataset=gender_validation_dataset,
+    validation_fn=validate,
+    max_drop=0.01,
+    drop_type=nncf.DropType.ABSOLUTE,
+)
 
-# age_int8 = ov.compile_model(quantized_age)
-# gender_int8 = ov.compile_model(quantized_gender)
+age_int8 = ov.compile_model(quantized_age)
+gender_int8 = ov.compile_model(quantized_gender)
 
-# ov.save_model(quantized_gender, "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml", compress_to_fp16=False)
-# ov.save_model(quantized_age, "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml", compress_to_fp16=False)
+ov.save_model(quantized_gender, "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml", compress_to_fp16=False)
+ov.save_model(quantized_age, "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml", compress_to_fp16=False)
