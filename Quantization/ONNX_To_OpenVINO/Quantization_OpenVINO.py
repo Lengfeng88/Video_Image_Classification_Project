@@ -14,6 +14,7 @@ import os
 import random
 from PIL import Image
 
+# Folder/model paths
 gender_path = "Quantization/gender_net_v11.onnx"
 age_path = "Quantization/age_net_new_v11.onnx"
 output_folder = "Quantization/calib_data_preprocessed_improved_data/"
@@ -56,6 +57,7 @@ age = ov.convert_model(age_path)
 # pred = np.argmax(output_tensor, axis=1)
 # print("Predicted gender class:", pred[0])
 
+# List the image names of the calibration data directory.
 img_names = os.listdir(calib_data_path)
 
 random.shuffle(img_names)
@@ -66,41 +68,45 @@ for img_name in (img_names):
     img = Image.open(img_path)
     img.save(str(output_folder + img_name))
 
+# Custom Pytorch dataset for storing calibration data.
 overall_gender_data = GenderCalibrationDataset(img_dir=calib_data_path)
 overall_age_data = AgeCalibrationDataset(img_dir=output_folder)
 
+# Calibration - Validation Dataset split size. 80% calibration, 20% Validation.
 calib_size_gender = int(0.8 * len(overall_gender_data))
 val_size_gender = len(overall_gender_data) - calib_size_gender
 
 calib_size_age = int(0.8 * len(overall_age_data))
 val_size_age = len(overall_age_data) - calib_size_age
 
+# Shuffling and splitting the data
 gender_calib_dataset, gender_val_dataset = random_split(overall_gender_data, [calib_size_gender, val_size_gender])
 age_calib_dataset, age_val_dataset = random_split(overall_age_data, [calib_size_age, val_size_age])
 
+# Loading the dataset into the DataLoader.
 gender_calibration_loader = DataLoader(gender_calib_dataset, batch_size=1, shuffle=False)
 gender_validation_loader = DataLoader(gender_val_dataset, batch_size=1, shuffle=False)
 
 age_calibration_loader = DataLoader(age_calib_dataset, batch_size=1, shuffle=False)
 age_validation_loader = DataLoader(age_val_dataset, batch_size=1, shuffle=False)
 
+# Transform function
 def transform_fn(data_item):
     images, _ = data_item
     return images.numpy()
 
+# Validation function
 def validate(model: ov.CompiledModel, 
     validation_loader: torch.utils.data.DataLoader) -> float:
     predictions = []
     references = []
 
+    # Takes the output of one batch
     output = model.outputs[0]
 
+    # Concat results and return to accuracy_score function.
     for images, target in validation_loader:
         pred = model(images)[output]
-        
-        # input_layer = model.input(0)
-        # result = model({input_layer.get_any_name(): images})
-        # pred = list(result.values())[0]
 
         predictions.append(np.argmax(pred, axis=1))
         references.append(target)
@@ -109,20 +115,21 @@ def validate(model: ov.CompiledModel,
     references = np.concatenate(references, axis=0)
     return accuracy_score(predictions, references)
 
+# Repeat the same process for gender.
 gender_calibration_dataset = nncf.Dataset(gender_calibration_loader, transform_fn)
 gender_validation_dataset = nncf.Dataset(gender_validation_loader, transform_fn)
 
 age_calibration_dataset = nncf.Dataset(age_calibration_loader, transform_fn)
 age_validation_dataset = nncf.Dataset(age_validation_loader, transform_fn)
 
-quantized_age = nncf.quantize_with_accuracy_control(
-    age,
-    calibration_dataset=age_calibration_dataset,
-    validation_dataset=age_validation_dataset,
-    validation_fn=validate,
-    max_drop=0.01,
-    drop_type=nncf.DropType.ABSOLUTE,
-)
+# quantized_age = nncf.quantize_with_accuracy_control(
+#     age,
+#     calibration_dataset=age_calibration_dataset,
+#     validation_dataset=age_validation_dataset,
+#     validation_fn=validate,
+#     max_drop=0.01,
+#     drop_type=nncf.DropType.ABSOLUTE,
+# )
 
 quantized_gender = nncf.quantize_with_accuracy_control(
     gender,
@@ -133,8 +140,10 @@ quantized_gender = nncf.quantize_with_accuracy_control(
     drop_type=nncf.DropType.ABSOLUTE,
 )
 
-age_int8 = ov.compile_model(quantized_age)
-gender_int8 = ov.compile_model(quantized_gender)
+# Compile the model into INT8
+# age_int8 = ov.compile_model(quantized_age)
+# gender_int8 = ov.compile_model(quantized_gender)
 
-ov.save_model(quantized_gender, "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml", compress_to_fp16=False)
-ov.save_model(quantized_age, "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml", compress_to_fp16=False)
+# Save the model.
+# ov.save_model(quantized_gender, "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml", compress_to_fp16=False)
+# ov.save_model(quantized_age, "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml", compress_to_fp16=False)

@@ -4,6 +4,8 @@ import openvino as ov
 
 gender_path = "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml"
 age_path = "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml"
+
+#Fix model format, supposed to be in OV format.
 cvt_gender = ov.convert_model(gender_path)
 cvt_age = ov.convert_model(age_path)
 

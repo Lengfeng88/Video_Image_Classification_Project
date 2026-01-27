@@ -4,6 +4,9 @@ import openvino as ov
 
 core = ov.Core()
 
+age = "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml"
+gender = "Quantization/ONNX_To_OpenVINO/gender_ov_quant.xml"
+
 age_fp32 = core.compile_model(age, "CPU")
 gender_fp32 = core.compile_model(gender, "CPU")
 
@@ -15,10 +18,10 @@ img = img.astype(np.float32)
 img -= np.array([104.0, 117.0, 123.0], dtype=np.float32)
 img = np.expand_dims(img, axis=0)  # (1,227,227,3)
 
-input_layer = gender_fp32.input(0)
+input_layer_gender = gender_fp32.input(0)
 
 result = gender_fp32({
-    input_layer.get_any_name(): img
+    input_layer_gender.get_any_name(): img
 })
 output_tensor = list(result.values())[0]
 
@@ -27,3 +30,7 @@ print("Raw output:", output_tensor)
 
 pred = np.argmax(output_tensor, axis=1)
 print("Predicted gender class:", pred[0])
+
+input_layer_age = age_fp32.input(0)
+
+
