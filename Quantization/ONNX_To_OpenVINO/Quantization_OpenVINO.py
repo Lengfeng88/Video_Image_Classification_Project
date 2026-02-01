@@ -62,7 +62,7 @@ img_names = os.listdir(calib_data_path)
 
 random.shuffle(img_names)
 
-img_names = img_names[:7676]
+img_names = img_names[:100]
 for img_name in (img_names):
     img_path = str(calib_data_path + img_name)
     img = Image.open(img_path)
@@ -122,23 +122,23 @@ gender_validation_dataset = nncf.Dataset(gender_validation_loader, transform_fn)
 age_calibration_dataset = nncf.Dataset(age_calibration_loader, transform_fn)
 age_validation_dataset = nncf.Dataset(age_validation_loader, transform_fn)
 
-# quantized_age = nncf.quantize_with_accuracy_control(
-#     age,
-#     calibration_dataset=age_calibration_dataset,
-#     validation_dataset=age_validation_dataset,
-#     validation_fn=validate,
-#     max_drop=0.01,
-#     drop_type=nncf.DropType.ABSOLUTE,
-# )
-
-quantized_gender = nncf.quantize_with_accuracy_control(
-    gender,
-    calibration_dataset=gender_calibration_dataset,
-    validation_dataset=gender_validation_dataset,
+quantized_age = nncf.quantize_with_accuracy_control(
+    age,
+    calibration_dataset=age_calibration_dataset,
+    validation_dataset=age_validation_dataset,
     validation_fn=validate,
     max_drop=0.01,
     drop_type=nncf.DropType.ABSOLUTE,
 )
+
+# quantized_gender = nncf.quantize_with_accuracy_control(
+#     gender,
+#     calibration_dataset=gender_calibration_dataset,
+#     validation_dataset=gender_validation_dataset,
+#     validation_fn=validate,
+#     max_drop=0.01,
+#     drop_type=nncf.DropType.ABSOLUTE,
+# )
 
 # Compile the model into INT8
 # age_int8 = ov.compile_model(quantized_age)

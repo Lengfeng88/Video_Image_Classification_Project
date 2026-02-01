@@ -72,8 +72,8 @@ prev_frame_gender = 0
 prev_frame_age_confidence = 0
 prev_frame_gender_confidence = 0
 
-#Only changing a prediction if the confidence level is greater than the previous. Otherwise, keep 
-#displating the current prediction
+# Only changing a prediction if the confidence level is greater than the previous. Otherwise, keep 
+# displating the current prediction
 while True:
     ret, frame = cap.read()
 

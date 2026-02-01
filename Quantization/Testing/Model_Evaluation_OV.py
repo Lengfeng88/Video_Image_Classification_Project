@@ -4,10 +4,13 @@ import openvino as ov
 import numpy as np
 import time
 import random
+import PIL
+import matplotlib as plt
 
-# This basically will list all the details about the model.
+# This basically will print out all the useful aspects of model performance such as average latency, average accuracy, number of parameters, number of layers, etc.
+# I couldn't find anything on built-in model evaluation methods, so I had to make a DIY implementation.
 
-# List all layer names
+# For caffe preprocessing, mean subtraction still applies to converted models.
 MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
 
 # Converted from a caffe2 model, so it will use the same preprocessing other than blobbing. Using an numpy array to store model format instead.
@@ -30,18 +33,9 @@ def accuracy_score(predictions, validation_dataset, validation_data_dir):
     for img_path in validation_data_dir:
         if img_path in predictions and img_path in validation_dataset:
             total += 1
-            # print(str(predictions[img_path])+ " " + str(validation_dataset[img_path]) + "\n")
-
-            # for ch in validation_dataset[img_path]:
-            #     if ch > '9' or ch < '0':
-            #         print(img_path)
-            #         break
-            if predictions[img_path] == validation_dataset[img_path]:
+            if int(predictions[img_path]) == int(validation_dataset[img_path]):
                 cnts += 1
-            # else: 
-            #     print(str(predictions[img_path]) + " " + str(validation_dataset[img_path]) + "\n")
-    # print(str(cnts) + "/" + str(total))
-    return cnts
+    return cnts / total
 
 def get_validation_dataset(data_names, data_paths, model_type):
     cnts = 0
@@ -64,8 +58,34 @@ def get_validation_dataset(data_names, data_paths, model_type):
     # print(age_labels)
     # print(gender_labels)
 
+    la = ['(0-2)', '(4-6)', '(8-12)', '(15-20)',
+                '(25-32)', '(38-43)', '(48-53)', '(60-100)']
+    
+    age_range = [(0, 2), (4, 6), (8, 12), (15, 20), (25, 32), (38, 43), (60, 100)]
+
+    tmp_age_labels = []
+    for idx, label_path in enumerate(age_labels):
+        age_labels[label_path] = int(age_labels[label_path])
+        tmp_age_labels.append((label_path, age_labels[label_path]))
+
+    tmp_age_labels = sorted(tmp_age_labels, key=lambda x: x[1])
+
+    # print(tmp_age_labels)
+
+    final_age_labels = {}
+    j = 0
+    for label_path, label in tmp_age_labels:
+        while j < len(age_range) - 1 and label > age_range[j][1]:
+            j += 1
+        
+        if label < age_range[j][0]: continue
+        
+        final_age_labels[label_path] = j
+
+    # print(final_age_labels)
+
     if model_type == "age":
-        return age_labels
+        return final_age_labels
     
     return gender_labels
 
@@ -94,12 +114,15 @@ def get_metrics_ov(model_path, weight_path, model_type):
 
     print("Total parameters:", total_params)
 
-    batchsize = 3
+    print(compiled_model.input(0).get_shape())
+
+    batchsize = 1000
     folder_dir = "UTKFace/"
-    img_names = os.listdir(folder_dir)[:batchsize]
+    img_names = os.listdir(folder_dir)
+    random.shuffle(img_names)
+    img_names = img_names[:batchsize + 1]
     img_paths = []
 
-    # random.shuffle(img_names)
     for img_name in img_names:
         img_paths.append(folder_dir + img_name)
 
@@ -119,8 +142,6 @@ def get_metrics_ov(model_path, weight_path, model_type):
         # Finding the most confident prediction.
         output = list(result.values())[0]
         pred = np.argmax(output, axis=1)
-        
-        # predictions.append(pred)
 
     # Testing 1000 images
     time0 = time.time()
@@ -137,24 +158,16 @@ def get_metrics_ov(model_path, weight_path, model_type):
         # Finding the most confident prediction.   
         output = list(result.values())[0]
         pred = np.argmax(output, axis=1)
+
+        # if model_type == "gender":
         predictions[img_path] = pred[0]
     time1 = time.time()
     
-    # print(img_names)
-    # print(img_paths)
     validation_data = get_validation_dataset(img_names, img_paths, model_type)
-    # print(str(predictions[img_path]))
-    for img_path in img_paths:
-        # print(str(predictions[img_path])+ " " + str(validation_data[img_path]))
-        if predictions[img_path] == validation_data[img_path]:
-            print(str(predictions[img_path])+ " " + str(validation_data[img_path]))
-        # print(str(validation_data[img_path]))
+    model_accuracy = accuracy_score(predictions, get_validation_dataset(img_names, img_paths, model_type), img_paths)
 
-    # model_accuracy = accuracy_score(predictions, get_validation_dataset(img_names, img_paths, model_type), img_paths)
-    # print(predictions)
-    # print(get_validation_dataset(data_names=img_names, model_type=model_type))
-    # print("Model average accuracy: " + str(model_accuracy))
-    print("Model average latency: " + str((time1 - time0) / 1000) + " seconds")
+    print("Model average accuracy: " + str(model_accuracy))
+    print("Model average latency: " + str((time1 - time0) / batchsize) + " seconds")
 
 # Model paths
 age_xml = "Quantization/ONNX_To_OpenVINO/age_ov_quant.xml"
@@ -163,9 +176,5 @@ age_bin = "Quantization/ONNX_To_OpenVINO/age_ov_quant.bin"
 gender_xml = "Quantization\ONNX_To_OpenVINO\gender_ov_quant.xml"
 gender_bin = "Quantization\ONNX_To_OpenVINO\gender_ov_quant.bin"
 
-age_caffe2 = cv2.dnn.readNetFromCaffe("models/age_deploy.prototxt", "models/age_net.caffemodel")
-
-# get_metrics_ov(age_xml, age_bin, model_type="age")
-get_metrics_ov(gender_xml, gender_bin, model_type = "gender")
-
-
+get_metrics_ov(age_xml, age_bin, model_type="age")
+# get_metrics_ov(gender_xml, gender_bin, model_type = "gender")

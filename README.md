@@ -47,4 +47,5 @@ Moving to Android Studio.
 
 *Note: Originally my plan here is to quantize the gender and age models, then move to deployment as is. As you can imagine, I was not pleasantly surprised when I found out OpenCV DNN still runs it as FP32. So, now, falling to a backup plan which is to convert and quantize the original model to TFLite and then deploy on android studio using C++. Regardless, the comparison will still happen and I will implement the deployment in those 2 ways, however is it evident which one is better.
 
+Update: Following model Post training quantization to INT8 using the Openvino framework. Model evaluation results indicate a near 10% drop in accuracy for the age model. Currently looking into it, but it may be a blog or post worthy problem if it is a problem with the MDNN conversion tools.
 
